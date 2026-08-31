@@ -1,28 +1,34 @@
 #!/usr/bin/env python3
 """
 Ancillary verification for
-  "Two-basepoint Terwilliger algebras and the quantum rigidity of circulant
-   graphs of prime order".
+  "Quantum rigidity of prime-order circulants via two-basepoint Terwilliger
+   algebras".
 
-Three independent checks, all in exact integer / rational arithmetic:
+Four independent checks, all in exact integer / rational arithmetic:
 
-  (A) the four certificates of Section 6 (p = 13, 17, 31, 41);
-  (B) the confinement lemma, the quadratic threshold p > (k-1)^2+2, the
-      enumeration of the eight residual pairs in types <= 10, and their witnesses;
-  (C) the saturation of Theorem 7.1 (all 214 pairs with p <= 250), over Q for
+  (A) the four certificates of Section 7 (p = 13, 17, 31, 41), and their
+      optimality;
+  (B) the confinement lemma, the quadratic threshold p > (k-1)(k-2)+2, the
+      sharpness of the count (k-1)(k-2), the enumeration of the eight residual
+      pairs in types <= 10, and their four singleton-block witnesses;
+  (C) the saturation of Theorem 8.1 (all 214 pairs with p <= 250), over Q for
       small p and over F_q, q = 1000003, for the whole range;
-  (D) the capture-depth table of Appendix A.
+  (D) the capture depths of Definition 5.14 and Appendix A, recomputed from
+      scratch in exact integer arithmetic, together with the structural and
+      harmonic observations of Section 8.2.
 
 Run:  python3 verify.py [A|B|C|D|all]
 Requires: sympy, numpy.
 """
 import sys
 from fractions import Fraction
+from math import gcd
 import sympy
 from sympy import primerange
 
 # ---------------------------------------------------------------- utilities
 def coset_decomposition(p, E):
+    """Cosets of E in Z_p^*, ordered by least element; the first is E itself."""
     seen, cs = set(), []
     for x in range(1, p):
         if x in seen: continue
@@ -43,6 +49,7 @@ def proper_subgroups_with_minus_one(p):
     return out
 
 def blocks(p, cs):
+    """The blocks C_s cap (1+C_t) partitioning Z_p \\ {0,1}, keyed by (s,t)."""
     idx = [0]*p
     for i, C in enumerate(cs, 1):
         for x in C: idx[x] = i
@@ -52,10 +59,14 @@ def blocks(p, cs):
         B.setdefault((idx[x], idx[(x-1) % p]), []).append(x)
     return {k: sorted(v) for k, v in B.items()}
 
+def all_blocks(p, cs):
+    """All blocks of the basepoint partition P, including {0} and {1}."""
+    return [[0], [1]] + [B for B in blocks(p, cs).values()]
+
 # ------------------------------------------------------------- (A) certificates
 def check_certificates():
-    print("(A) certificates of Section 6")
-    data = {  # p -> (index r, B-spec, u, D-spec, expected profile, captured z)
+    print("(A) certificates of Section 7")
+    data = {  # p -> (r, B-spec, u, D-spec, expected profile, captured z)
         31: (3, (3, 1), 1, (2, 3), {6: 1, 12: 0, 14: 0, 19: 0}, 6),
         41: (4, (3, 2), 1, (2, 1), {2: 1, 5: 0, 32: 0}, 2),
         13: (2, (1, 1), 1, (2, 1), {2: 0, 5: 1, 11: 1}, 2),
@@ -83,13 +94,21 @@ def check_certificates():
     ok &= good
     print(f"   p= 17  B={B}  D={D}  profile={v}  ->  v1 supported on {v1}")
     print(f"          D'={Dp}  profile={v2}  -> delta_16  " + ("OK" if good else "FAIL"))
-    return ok
+    # optimality: none of the four pairs has a singleton block, so d >= 2
+    good = True
+    for p, k in ((13, 6), (17, 8), (31, 10), (41, 10)):
+        cs = coset_decomposition(p, subgroup_of_order(p, k))
+        good &= min(len(B) for B in blocks(p, cs).values()) >= 2
+    ok &= good
+    print("   no singleton block for (13,6), (17,8), (31,10), (41,10), so d >= 2  "
+          + ("OK" if good else "FAIL"))
+    return bool(ok)
 
 # ------------------------------------------------------- (B) threshold & 8 pairs
 def check_threshold():
     print("(B) confinement lemma, quadratic threshold, and the eight residual pairs")
     ok = True
-    bad_containment, bad_bound = [], []
+    bad_containment, bad_bound, tight = [], [], 0
     n = 0
     for p in primerange(5, 200):
         for k, E in proper_subgroups_with_minus_one(p):
@@ -98,30 +117,36 @@ def check_threshold():
             big = set()
             for B in Bl.values():
                 if len(B) >= 2: big.update(B)
+            # Lemma 6.1: e, e' both != 1 and e != e'
             conf = {((1-ep)*pow((e-ep) % p, p-2, p)) % p
-                    for e in E for ep in E if e != ep and ep != 1}
+                    for e in E if e != 1 for ep in E if ep != 1 and e != ep}
             if not big <= conf: bad_containment.append((p, k))
-            if len(conf) > (k-1)**2: bad_bound.append((p, k))
-            if p-2 > (k-1)**2 and min(len(B) for B in Bl.values()) != 1:
+            if len(big) > (k-1)*(k-2): bad_bound.append((p, k))
+            if len(big) == (k-1)*(k-2) and k > 2: tight += 1
+            if p-2 > (k-1)*(k-2) and min(len(B) for B in Bl.values()) != 1:
                 bad_bound.append(("no singleton", p, k))
     ok &= not bad_containment and not bad_bound
-    print(f"   {n} pairs: confinement holds ({not bad_containment}), "
-          f"bound (k-1)^2 and singleton conclusion hold ({not bad_bound})")
+    print(f"   {n} pairs with p < 200: confinement holds ({not bad_containment}), "
+          f"bound (k-1)(k-2) and singleton conclusion hold ({not bad_bound})")
+    print(f"   the bound (k-1)(k-2) is attained for {tight} of them (Remark 6.3)")
     pairs = sorted((p, k) for k in (2, 4, 6, 8, 10)
-                   for p in primerange(5, (k-1)**2+3)
+                   for p in primerange(5, (k-1)*(k-2)+3)
                    if (p-1) % k == 0 and p-1 > k)
     expected = sorted([(13, 6), (19, 6), (17, 8), (41, 8),
                        (31, 10), (41, 10), (61, 10), (71, 10)])
     good = (pairs == expected); ok &= good
-    print(f"   residual pairs with p <= (k-1)^2+2 in types <= 10: {pairs}  "
+    print(f"   residual pairs with p <= (k-1)(k-2)+2 in types <= 10: {pairs}  "
           + ("OK" if good else "FAIL"))
-    wit = {(19, 6): (2, 1, 2), (41, 8): (3, 5, 12), (61, 10): (5, 2, 8), (71, 10): (2, 1, 2)}
-    for (p, k), (s, t, z) in wit.items():
-        cs = coset_decomposition(p, subgroup_of_order(p, k))
-        B = sorted(set(cs[s-1]) & {(1+c) % p for c in cs[t-1]})
-        good = (B == [z]); ok &= good
-        print(f"   p={p:2d}, k={k:2d}: C_{s} cap (1+C_{t}) = {B}  " + ("OK" if good else "FAIL"))
-    return ok
+    # the four singleton-block witnesses, in the multiplier form of Proposition 7.3
+    wit = {(19, 6): (2, 1, 2), (41, 8): (4, 8, 12), (61, 10): (8, 2, 8), (71, 10): (2, 1, 2)}
+    for (p, k), (a, b, z) in wit.items():
+        E = subgroup_of_order(p, k)
+        S = sorted({(a*e) % p for e in E} & {(1 + b*e) % p for e in E})
+        good = (S == [z]); ok &= good
+        aa = "E" if a == 1 else f"{a}E"; bb = "E" if b == 1 else f"{b}E"
+        print(f"   p={p:2d}, k={k:2d}: ({aa}) cap (1+{bb}) = {S}  "
+              + ("OK" if good else "FAIL"))
+    return bool(ok)
 
 # ------------------------------------------------------------- (C) saturation
 def module_dim_exact(p, E):
@@ -206,26 +231,131 @@ def check_saturation(exact_bound=60):
     print(f"   {n} pairs tested (exact over Q for p <= {exact_bound}); failures: {bad}")
     return not bad and n == 214
 
-# --------------------------------------------------------- (D) appendix table
+# --------------------------------------------------------- (D) capture depths
+class _Basis:
+    """Echelon basis over Z with primitive rows; exact, no floating point."""
+    __slots__ = ("p", "piv")
+    def __init__(self, p): self.p = p; self.piv = {}
+    @staticmethod
+    def _prim(v):
+        g = 0
+        for x in v:
+            if x: g = gcd(g, abs(x))
+        if g > 1: v = [x//g for x in v]
+        for x in v:
+            if x:
+                if x < 0: v = [-y for y in v]
+                break
+        return v
+    def _reduce(self, v):
+        for i in range(self.p):
+            if v[i]:
+                row = self.piv.get(i)
+                if row is None: return self._prim(v), i
+                g = gcd(row[i], v[i]); m1, m2 = row[i]//g, v[i]//g
+                v = self._prim([m1*v[j] - m2*row[j] for j in range(self.p)])
+        return v, -1
+    def insert(self, v):
+        v, i = self._reduce(list(v))
+        if i < 0: return False
+        self.piv[i] = v; return True
+    def contains(self, v):
+        return self._reduce(list(v))[1] < 0
+
+def capture_depth(p, k, dmax=40):
+    """Least d with a new point mass in V_d = Delta . B . V_{d-1}, and the
+    full set Z of vertices captured at that depth.  Exact integer arithmetic."""
+    E = subgroup_of_order(p, k); cs = coset_decomposition(p, E)
+    Bl = all_blocks(p, cs)
+    # V_1 = span of the block indicators (Lemma 5.13)
+    sing = sorted(B[0] for B in Bl if len(B) == 1 and B[0] not in (0, 1))
+    if sing: return 1, sing
+    cur = []
+    e0 = [0]*p; e0[0] = 1; e1 = [0]*p; e1[1] = 1
+    base = _Basis(p)
+    for v in (e0, e1):
+        if base.insert(v): cur.append(v)
+    for d in range(1, dmax+1):
+        S = _Basis(p); Sv = []
+        for v in cur:
+            cand = [list(v)]
+            for C in cs:
+                w = [0]*p
+                for c in C:
+                    for x in range(p): w[x] += v[(x-c) % p]
+                cand.append(w)
+            for w in cand:
+                if any(w) and S.insert(w): Sv.append(w)
+        V = _Basis(p); Vv = []
+        for w in Sv:
+            for B in Bl:
+                u = [0]*p
+                for x in B: u[x] = w[x]
+                if any(u) and V.insert(u): Vv.append(u)
+        Z = []
+        for z in range(p):
+            if z in (0, 1): continue
+            e = [0]*p; e[z] = 1
+            if V.contains(e): Z.append(z)
+        if Z: return d, Z
+        cur = Vv
+    return None, []
+
 def check_table(path="depths.json"):
-    """Recompute the capture depths of Appendix A and compare against depths.json."""
+    """Recompute every capture depth from scratch and compare with depths.json."""
     import json, collections
-    print("(D) capture-depth table of Appendix A")
-    try: rows = json.load(open(path))
-    except FileNotFoundError:
-        print("   depths.json not found; skipping"); return True
-    c = collections.Counter(d for _, _, d, _ in rows)
-    quoted = {1: 51, 2: 92, 4: 25, 5: 6, 6: 8, 7: 11, 8: 3, 9: 2, 10: 3}
-    ok = (len(rows) == 214 and all(c[l] == n for l, n in quoted.items())
-          and c[11]+c[12] == 13 and c[1]+c[2] == 143)
-    print(f"   {len(rows)} rows; distribution {dict(sorted(c.items()))}  "
-          + ("OK" if ok else "FAIL"))
-    pal = [(p, d, z) for p, k, d, z in rows if k == (p-1)//2]
-    good = all(z == 2 or z == pow(2, p-2, p) for p, d, z in pal)
-    ok &= good
-    print(f"   {len(pal)} Paley pairs; first capture is always delta_2 or delta_(1/2): "
+    print("(D) capture depths of Definition 5.14 and Appendix A")
+    rows = []
+    for p in primerange(5, 251):
+        for k, E in proper_subgroups_with_minus_one(p):
+            d, Z = capture_depth(p, k)
+            rows.append((p, k, d, min(Z), Z))
+    ok = all(d is not None for _, _, d, _, _ in rows) and len(rows) == 214
+    c = collections.Counter(d for _, _, d, _, _ in rows)
+    quoted = {1: 143, 2: 31, 3: 19, 4: 5, 5: 11, 6: 5}
+    good = (dict(c) == quoted); ok &= good
+    print(f"   {len(rows)} pairs recomputed; distribution {dict(sorted(c.items()))}  "
           + ("OK" if good else "FAIL"))
-    return ok
+    # structural implications of Section 8.2
+    r_of = lambda p, k: (p-1)//k
+    good = (all(r_of(p, k) <= 7 for p, k, d, _, _ in rows if d >= 2)
+            and all(r_of(p, k) <= 4 for p, k, d, _, _ in rows if d >= 3)
+            and all(r_of(p, k) == 2 for p, k, d, _, _ in rows if d >= 4))
+    ok &= good
+    print("   d>=2 => r<=7,  d>=3 => r<=4,  d>=4 => r=2  " + ("OK" if good else "FAIL"))
+    n48 = sum(1 for p, k, d, _, _ in rows if r_of(p, k) >= 3 and d >= 2)
+    print(f"   pairs with r>=3 and d>=2: {n48}  " + ("OK" if n48 == 48 else "FAIL"))
+    ok &= (n48 == 48)
+    # Paley family
+    pal = [(p, d, Z) for p, k, d, _, Z in rows if k == (p-1)//2]
+    seq = [d for _, d, _ in pal]
+    good = (len(pal) == 24 and seq == sorted(seq) and max(seq) == 6)
+    ok &= good
+    print(f"   {len(pal)} Paley pairs, depths {seq} non-decreasing  "
+          + ("OK" if good else "FAIL"))
+    inv2 = lambda p: pow(2, p-2, p)
+    good = all(inv2(p) in Z for p, d, Z in pal); ok &= good
+    print("   2^{-1} captured at minimal depth in every Paley pair  "
+          + ("OK" if good else "FAIL"))
+    trip = [p for p, d, Z in pal if sorted(Z) == sorted({2, p-1, inv2(p)})]
+    good = (trip == [5, 13, 17, 53, 61, 157, 173, 181]); ok &= good
+    print(f"   Z = harmonic triple exactly for p in {trip}  " + ("OK" if good else "FAIL"))
+    nall = sum(1 for p, k, d, _, Z in rows if inv2(p) in Z)
+    print(f"   2^{{-1}} captured at minimal depth in {nall} of 214 pairs  "
+          + ("OK" if nall == 197 else "FAIL"))
+    ok &= (nall == 197)
+    # beta-stability (Lemma 5.15)
+    good = all(set(Z) == {(1-z) % p for z in Z} for p, k, d, _, Z in rows); ok &= good
+    print("   every capture set is stable under z -> 1-z  " + ("OK" if good else "FAIL"))
+    # agreement with the stored table
+    try:
+        stored = [tuple(t) for t in json.load(open(path))]
+    except FileNotFoundError:
+        print("   depths.json not found; skipping comparison"); return bool(ok)
+    mine = [(p, k, d, z) for p, k, d, z, _ in rows]
+    good = (sorted(stored) == sorted(mine)); ok &= good
+    print(f"   agrees with {path} row by row  " + ("OK" if good else "FAIL"))
+    return bool(ok)
 
 if __name__ == "__main__":
     what = (sys.argv[1] if len(sys.argv) > 1 else "all").lower()
@@ -236,4 +366,3 @@ if __name__ == "__main__":
     if what in ("d", "all"): res.append(check_table())
     print()
     print("ALL VERIFICATIONS PASSED" if all(res) else "*** FAILURE ***")
-
