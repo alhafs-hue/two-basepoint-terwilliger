@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite both the software and the accompanying paper."
+title: "Verification scripts for: Two-basepoint Terwilliger algebras and the quantum rigidity of circulant graphs of prime order"
+abstract: >-
+  Exact-arithmetic verification of the computational claims of the paper
+  "Two-basepoint Terwilliger algebras and the quantum rigidity of circulant
+  graphs of prime order": the four capture certificates, the confinement lemma
+  and quadratic threshold, the saturation of the two-basepoint module for all
+  214 pairs (p,E) with p <= 250, and the capture-depth table of Appendix A.
+type: software
+authors:
+  - family-names: Marashdeh
+    given-names: Mohammad F.
+    affiliation: "Department of Mathematics, Mutah University, Karak, Jordan"
+    email: marashdeh@mutah.edu.jo
+license: MIT
+keywords:
+  - quantum automorphism group
+  - quantum permutation group
+  - circulant graph
+  - Paley graph
+  - Terwilliger algebra
+  - cyclotomic association scheme

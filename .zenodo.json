@@ -1,0 +1,21 @@
+{
+  "title": "Verification scripts for: Two-basepoint Terwilliger algebras and the quantum rigidity of circulant graphs of prime order",
+  "description": "<p>Exact-arithmetic verification of every computational claim in the paper <em>Two-basepoint Terwilliger algebras and the quantum rigidity of circulant graphs of prime order</em>.</p><p>Part A checks the four capture certificates of Section 6 (p = 13, 17, 31, 41). Part B checks the confinement lemma, the quadratic threshold p &gt; (k-1)^2 + 2, the enumeration of the eight residual pairs in types at most 10, and their singleton-block witnesses. Part C reruns the saturation of Theorem 7.1 for all 214 pairs (p, E) with p &le; 250, over the rationals for small p and over F_q with q = 1000003 throughout. Part D checks the capture-depth table of Appendix A. No floating-point arithmetic is used anywhere.</p>",
+  "upload_type": "software",
+  "license": "MIT",
+  "creators": [
+    {
+      "name": "Marashdeh, Mohammad F.",
+      "affiliation": "Department of Mathematics, Mutah University, Karak, Jordan"
+    }
+  ],
+  "keywords": [
+    "quantum automorphism group",
+    "quantum permutation group",
+    "circulant graph",
+    "Paley graph",
+    "Terwilliger algebra",
+    "cyclotomic association scheme"
+  ],
+  "access_right": "open"
+}
