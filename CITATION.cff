@@ -1,14 +1,15 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite both the software and the accompanying paper."
-title: "Verification scripts for: Two-basepoint Terwilliger algebras and the quantum rigidity of circulant graphs of prime order"
+title: "Verification scripts for: Quantum rigidity of prime-order circulants via two-basepoint Terwilliger algebras"
 abstract: >-
   Exact-arithmetic verification of the computational claims of the paper
-  "Two-basepoint Terwilliger algebras and the quantum rigidity of circulant
-  graphs of prime order": the four capture certificates, the confinement lemma
-  and quadratic threshold, the saturation of the two-basepoint module for all
-  214 pairs (p,E) with p <= 250, and the capture-depth table of Appendix A.
+  "Quantum rigidity of prime-order circulants via two-basepoint Terwilliger
+  algebras": the four capture certificates, the confinement lemma and the
+  quadratic threshold p > (k-1)(k-2)+2, the saturation of the two-basepoint
+  module for all 214 pairs (p,E) with p <= 250, and the capture depths of
+  Appendix A recomputed from scratch in exact integer arithmetic.
 type: software
-version: "v1.0"
+version: "v1.1"
 date-released: 2026-08-31
 identifiers:
   - type: doi
