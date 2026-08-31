@@ -1,8 +1,6 @@
 # Two-basepoint Terwilliger algebras and the quantum rigidity of circulant graphs of prime order
 
-<!-- After the first Zenodo release, replace the two placeholders below with the
-     concept DOI (the "all versions" DOI) and delete this comment. -->
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22182428.svg)](https://doi.org/10.5281/zenodo.22182428)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Verification scripts and data for the paper
