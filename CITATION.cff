@@ -8,6 +8,12 @@ abstract: >-
   and quadratic threshold, the saturation of the two-basepoint module for all
   214 pairs (p,E) with p <= 250, and the capture-depth table of Appendix A.
 type: software
+version: "v1.0"
+date-released: 2026-08-31
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.22182428"
+    description: "Concept DOI: resolves to the latest archived version"
 authors:
   - family-names: Marashdeh
     given-names: Mohammad F.
